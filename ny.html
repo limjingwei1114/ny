@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Firework Heart</title>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  background: radial-gradient(circle at bottom, #0b0b1f, #000);
+  overflow: hidden;
+}
+
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+</style>
+</head>
+
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+let rockets = [];
+let particles = [];
+
+function rand(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+/* ❤️ Heart shape formula */
+function heartShape(t) {
+  return {
+    x: 16 * Math.pow(Math.sin(t), 3),
+    y: -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t))
+  };
+}
+
+/* 🚀 Launch rocket from bottom */
+function launchRocket() {
+  rockets.push({
+    x: rand(canvas.width * 0.3, canvas.width * 0.7),
+    y: canvas.height,
+    vy: rand(6, 8),
+    targetY: rand(canvas.height * 0.25, canvas.height * 0.35)
+  });
+}
+
+/* 💥 Explode into heart */
+function explodeHeart(x, y) {
+  const scale = 6;
+  for (let i = 0; i < 200; i++) {
+    const t = Math.random() * Math.PI * 2;
+    const h = heartShape(t);
+    particles.push({
+      x,
+      y,
+      vx: h.x * scale * 0.05,
+      vy: h.y * scale * 0.05,
+      alpha: 1,
+      size: rand(1.5, 3),
+      color: `hsl(${rand(330, 360)}, 100%, 70%)`
+    });
+  }
+}
+
+function animate() {
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  /* Rockets */
+  rockets.forEach((r, i) => {
+    r.y -= r.vy;
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(r.x, r.y, 2, 10);
+
+    if (r.y <= r.targetY) {
+      explodeHeart(r.x, r.y);
+      rockets.splice(i, 1);
+    }
+  });
+
+  /* Heart particles */
+  particles.forEach((p, i) => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.alpha -= 0.01;
+
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (p.alpha <= 0) particles.splice(i, 1);
+  });
+
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(animate);
+}
+
+/* Auto launch */
+setInterval(launchRocket, 1500);
+animate();
+</script>
+
+</body>
+</html>
